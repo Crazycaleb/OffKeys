@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: 37af68dd4ff52174ba996a704e8a6a5b
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 200
+  forceTextureCase: 3
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Opus Std
+  fontNames:
+  - Opus Std
+  fallbackFontReferences: []
+  customCharacters: "nb#mTcCUB\uF0CE\uF0B3\uF057\uF0C5\uF0DCxwv\"%^*> 0"
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
