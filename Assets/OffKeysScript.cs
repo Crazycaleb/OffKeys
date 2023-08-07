@@ -80,14 +80,6 @@ public class OffKeysScript : MonoBehaviour
             button.OnInteract += delegate () { InputPress(button); return false; };
         }
 
-        for (int i = 0; i < 3; i++) 
-        {
-            DisplaySymbols[i].sprite = Symbols[37];
-        }
-
-
-        
-
     }
 
     void InputPress(KMSelectable button)
