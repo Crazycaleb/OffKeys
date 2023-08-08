@@ -241,7 +241,7 @@ Prefab:
     - target: {fileID: 114848120511536268, guid: 8814ea52310d2614a9feda02ec355ae4,
         type: 2}
       propertyPath: TwitchPlaysActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 114848120511536268, guid: 8814ea52310d2614a9feda02ec355ae4,
         type: 2}
@@ -354,24 +354,6 @@ Prefab:
       propertyPath: m_Name
       value: Off Keys
       objectReference: {fileID: 0}
-    - target: {fileID: 212621999459627634, guid: 4831ade747abc4a4c86c466a9c694aa4,
-        type: 2}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: ea10cfdaa9d30d245a504b297eae0e8d,
-        type: 3}
-    - target: {fileID: 212676154866971138, guid: 4831ade747abc4a4c86c466a9c694aa4,
-        type: 2}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: ea10cfdaa9d30d245a504b297eae0e8d,
-        type: 3}
-    - target: {fileID: 212886451907648582, guid: 4831ade747abc4a4c86c466a9c694aa4,
-        type: 2}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: ea10cfdaa9d30d245a504b297eae0e8d,
-        type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 4831ade747abc4a4c86c466a9c694aa4, type: 2}
   m_IsPrefabParent: 0

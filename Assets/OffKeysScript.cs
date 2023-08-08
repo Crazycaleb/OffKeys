@@ -14,7 +14,7 @@ public class OffKeysScript : MonoBehaviour
     public KMAudio Audio;
     public KMSelectable[] Buttonage;
     public Sprite[] Symbols;
-    public SpriteRenderer[] DisplaySymbols;
+    public SpriteRenderer[] SpriteSlots;
 
 
 
@@ -82,6 +82,12 @@ public class OffKeysScript : MonoBehaviour
 
     }
 
+    private void Solve()
+    {        
+        StartCoroutine(SolveAnimation());
+    }
+
+
     void InputPress(KMSelectable button)
     {
         button.AddInteractionPunch();
@@ -92,8 +98,21 @@ public class OffKeysScript : MonoBehaviour
                     StartCoroutine(KeyMove(button.transform));
                     Audio.PlaySoundAtTransform(Piano[i],transform);
                 }
-        }
-        
+        }    
+        Solve();
+    }
+
+    private IEnumerator SolveAnimation()
+    {
+        Audio.PlaySoundAtTransform("offsolveSound", transform);
+        yield return new WaitForSeconds(0.35f);
+        SpriteSlots[0].sprite = Symbols[39];
+        yield return new WaitForSeconds(0.35f);
+        SpriteSlots[1].sprite = Symbols[39];
+        yield return new WaitForSeconds(0.35f);
+        SpriteSlots[2].sprite = Symbols[38];
+        Module.HandlePass();
+        _moduleSolved = true;
     }
 
     IEnumerator KeyMove(Transform tf)
@@ -108,6 +127,6 @@ public class OffKeysScript : MonoBehaviour
         tf.localEulerAngles = new Vector3(0, 0, 0);
     }
 
-    
+
 }
 

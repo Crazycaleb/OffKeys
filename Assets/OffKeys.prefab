@@ -2154,7 +2154,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 154cc349951f6ad41a63ff123b368ac1, type: 3}
   - {fileID: 21300000, guid: 968fb1bd0d7b2bc4187cd3f6a0e4118d, type: 3}
   - {fileID: 21300000, guid: ea10cfdaa9d30d245a504b297eae0e8d, type: 3}
-  DisplaySymbols:
+  - {fileID: 21300000, guid: 72b732df42451264f92cfe6031676a79, type: 3}
+  - {fileID: 21300000, guid: be31b622958e6c1449d5c153ca198139, type: 3}
+  SpriteSlots:
   - {fileID: 212621999459627634}
   - {fileID: 212676154866971138}
   - {fileID: 212886451907648582}
