@@ -21,13 +21,17 @@ public class OffKeysScript : MonoBehaviour
     private int _moduleId;
     private static int _moduleIdCounter = 1;
     private bool _moduleSolved;
+    private int[] KeyValueage = {0,0,0,0,0,1,1,1,1,2,2,2};
+    private List<int> FaultyKeys = new List<int> {};
+    private List<int> SymbolKeys = new List<int> {};
     private string[] Piano = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     private string[] ExtendedPiano = {"C-", "C#-", "D-", "D#-", "E-", "F-", "F#-", "G-", "G#-", "A-", "A#-", "B-", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C+", "C#+", "D+", "D#+", "E+", "F+", "F#+", "G+", "G#+", "A+", "A#+", "B+", "C++"};
     //Generate puzzle (choose 3 symbols with unique solution)
-    //Rnd.random(-12,12)
     //while random=0, reroll
     //if sound != same sound, find sound in extended piano, apply offset, play sound, big winner!!! bang bang bang
-    
+
+
+
 
 
     string[][] RunesDiagram = new string[][] 
@@ -80,6 +84,67 @@ public class OffKeysScript : MonoBehaviour
             button.OnInteract += delegate () { InputPress(button); return false; };
         }
 
+        GeneratePuzzle();
+
+    }
+
+    void GeneratePuzzle() 
+    {
+        KeyValueage.Shuffle();
+
+        for (int i = 0; i < KeyValueage.Length; i++)
+        {
+            switch(KeyValueage[i])
+            {
+                case 1: FaultyKeys.Add(i); break;
+                case 2: SymbolKeys.Add(i); break;
+                default: break;
+            }
+        }
+        Debug.Log("The Faulty Keys are " + FaultyKeys.Join(","));
+        Debug.Log("The Symbol Keys are " + SymbolKeys.Join(","));
+        //Debug.Log("Corresponding key for C#: " + CorKeys("C#").Join(","));
+
+        List<int>[] CorKeys = Enumerable.Range(0, 4).Select(i => CalcKeys(Piano[FaultyKeys[i]]).ToList()).ToArray();
+        Debug.Log(CorKeys.Select(i => i.Join(",")).Join("\n"));
+
+        int[] KimWexler = new int[37];
+        for (int i = 0; i < KimWexler.Length; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                if (CorKeys[j].Contains(i))
+                {
+                    KimWexler[i]++;
+                }
+            }
+        }
+
+        Debug.Log(KimWexler.Join(","));
+        WompWomp:
+        var Symbols = KimWexler.Where(i => i != 0).ToArray().Shuffle().Take(3).ToArray();
+        if (Symbols.Any(i => RunesDiagram[i].Contains(Piano[FaultyKeys[3]])))
+            goto WompWomp;
+        
+        var Notes = Symbols.Select(i => RunesDiagram[i].Where(j => FaultyKeys));
+
+
+            
+        
+    }
+
+    private List<int> CalcKeys(string s)
+    {
+        List<int> HankSchrader = new List<int> {};
+        for (int i = 0; i < 37; i++)
+        {
+            if (RunesDiagram[i].Contains(s))
+            {
+                HankSchrader.Add(i);
+            }
+        }
+        return HankSchrader;
+
     }
 
     private void Solve()
@@ -91,7 +156,7 @@ public class OffKeysScript : MonoBehaviour
     void InputPress(KMSelectable button)
     {
         button.AddInteractionPunch();
-        for (int i = 11; i > -1; i--)
+        for (int i = 0; i < 12; i++)
         {
             if (Buttonage[i]==button)
                 {
@@ -99,7 +164,6 @@ public class OffKeysScript : MonoBehaviour
                     Audio.PlaySoundAtTransform(Piano[i],transform);
                 }
         }    
-        Solve();
     }
 
     private IEnumerator SolveAnimation()
