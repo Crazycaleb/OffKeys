@@ -30,49 +30,45 @@ public class OffKeysScript : MonoBehaviour
     //while random=0, reroll
     //if sound != same sound, find sound in extended piano, apply offset, play sound, big winner!!! bang bang bang
 
-
-
-
-
-    string[][] RunesDiagram = new string[][] 
+    int[][] RunesDiagram = new int[][]
     {
-        new string[] {"F", "F#"},
-        new string[] {"F", "E"},
-        new string[] {"F#", "A", "G#"},
-        new string[] {"F#", "E"},
-        new string[] {"F", "A", "B"},
-        new string[] {"G#", "A#", "D"},
-        new string[] {"F#", "A"},
-        new string[] {"E", "B", "D#"},
-        new string[] {"A#", "A", "D"},
-        new string[] {"A#", "A"},
-        new string[] {"F#", "D#", "G#"},
-        new string[] {"B", "C", "A#"},
-        new string[] {"D#", "D", "A"},
-        new string[] {"D#", "A", "G#"},
-        new string[] {"D#", "C", "G"},
-        new string[] {"A#", "B", "D#"},
-        new string[] {"B", "A"},
-        new string[] {"C#", "G", "G#"},
-        new string[] {"F#", "C", "B"},
-        new string[] {"D#", "G", "B"},
-        new string[] {"D#", "C", "C#"},
-        new string[] {"G", "C", "F#"},
-        new string[] {"F", "B", "G"},
-        new string[] {"C#", "B"},
-        new string[] {"C#", "C", "A#"},
-        new string[] {"F", "F#", "A#"},
-        new string[] {"C#", "A#", "G"},
-        new string[] {"C", "A"},
-        new string[] {"C", "E", "A#"},
-        new string[] {"F", "A#", "C#"},
-        new string[] {"C#", "D"},
-        new string[] {"E", "A"},
-        new string[] {"A#", "C#", "G"},
-        new string[] {"A#", "D", "E"},
-        new string[] {"E", "G"},
-        new string[] {"C#", "E", "G#"},
-        new string[] {"G", "G#"}
+        new int[] {5, 6},
+        new int[] {5, 4},
+        new int[] {6, 9, 8},
+        new int[] {6, 4},
+        new int[] {5, 9, 11},
+        new int[] {8, 10, 2},
+        new int[] {6, 9},
+        new int[] {4, 11, 3},
+        new int[] {10, 9, 2},
+        new int[] {10, 9},
+        new int[] {6, 3, 8},
+        new int[] {11, 0, 10},
+        new int[] {3, 2, 9},
+        new int[] {3, 9, 8},
+        new int[] {3, 0, 7},
+        new int[] {10, 11, 3},
+        new int[] {11, 9},
+        new int[] {1, 7, 8},
+        new int[] {6, 0, 11},
+        new int[] {3, 7, 11},
+        new int[] {3, 0, 1},
+        new int[] {7, 0, 6},
+        new int[] {5, 11, 7},
+        new int[] {1, 11},
+        new int[] {1, 0, 10},
+        new int[] {5, 6, 10},
+        new int[] {1, 10, 7},
+        new int[] {0, 9},
+        new int[] {0, 4, 10},
+        new int[] {5, 10, 1},
+        new int[] {1, 2},
+        new int[] {4, 9},
+        new int[] {10, 1, 7},
+        new int[] {10, 2, 4},
+        new int[] {4, 7},
+        new int[] {1, 4, 8},
+        new int[] {7, 8}
     };
 
     private void Start()
@@ -105,7 +101,7 @@ public class OffKeysScript : MonoBehaviour
         Debug.Log("The Symbol Keys are " + SymbolKeys.Join(","));
         //Debug.Log("Corresponding key for C#: " + CorKeys("C#").Join(","));
 
-        List<int>[] CorKeys = Enumerable.Range(0, 4).Select(i => CalcKeys(Piano[FaultyKeys[i]]).ToList()).ToArray();
+        List<int>[] CorKeys = Enumerable.Range(0, 4).Select(i => CalcKeys(FaultyKeys[i]).ToList()).ToArray();
         Debug.Log(CorKeys.Select(i => i.Join(",")).Join("\n"));
 
         int[] KimWexler = new int[37];
@@ -122,18 +118,53 @@ public class OffKeysScript : MonoBehaviour
 
         Debug.Log(KimWexler.Join(","));
         WompWomp:
-        var Symbols = KimWexler.Where(i => i != 0).ToArray().Shuffle().Take(3).ToArray();
-        if (Symbols.Any(i => RunesDiagram[i].Contains(Piano[FaultyKeys[3]])))
+        var Symbols = Enumerable.Range(0, 37).Where(i => KimWexler[i] != 0).ToArray().Shuffle().Take(3).ToArray();
+        if (Symbols.Any(i => RunesDiagram[i].Contains(FaultyKeys[3])))
             goto WompWomp;
-        
-        var Notes = Symbols.Select(i => RunesDiagram[i].Where(j => FaultyKeys));
 
+        var Notes = Symbols.Select(i => RunesDiagram[i].Where(j => FaultyKeys.Contains(j)).OrderBy(x => x).ToArray()).ToArray();
+        var oldNotes = Notes.ToArray();
 
-            
-        
+        if (Notes[0].SequenceEqual(Notes[1]) || Notes[0].SequenceEqual(Notes[2]) || Notes[1].SequenceEqual(Notes[2]))
+            goto WompWomp;
+        var list = new List<int>();
+        for (int i = 0; i < 3; i++)
+            list.AddRange(Notes[i]);
+        if (list.Distinct().Count() != 3)
+            goto WompWomp;
+
+        var notesToAssign = new int[3] { 99, 99, 99 };
+
+        if (!Notes.Any(i => i.Length == 1))
+            goto WompWomp;
+
+        for (int loop = 0; loop < 3; loop++)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                if (notesToAssign[i] != 99)
+                    continue;
+                if (Notes[i].Length == 0)
+                    goto WompWomp;
+                if (Notes[0].SequenceEqual(Notes[1]) || Notes[0].SequenceEqual(Notes[2]) || Notes[1].SequenceEqual(Notes[2]))
+                    goto WompWomp;
+                if (Notes[i].Length == 1)
+                {
+                    notesToAssign[i] = Notes[i][0];
+                    Notes[(i + 1) % 3] = Notes[(i + 1) % 3].Where(j => j != notesToAssign[i]).ToArray();
+                    Notes[(i + 2) % 3] = Notes[(i + 2) % 3].Where(j => j != notesToAssign[i]).ToArray();
+                    goto nextIter;
+                }
+            }
+            nextIter:;
+        }
+        Debug.Log("Faulty keys: " + FaultyKeys.Select(i => Piano[i]).Join(", "));
+        Debug.Log("Symbols: " + Symbols.Join(", "));
+        Debug.Log("Notes: " + oldNotes.Select(i => i.Select(j => Piano[j]).Join(" ")).Join(", "));
+        Debug.Log("Assigned: " + notesToAssign.Select(i => Piano[i]).Join(", "));
     }
 
-    private List<int> CalcKeys(string s)
+    private List<int> CalcKeys(int s)
     {
         List<int> HankSchrader = new List<int> {};
         for (int i = 0; i < 37; i++)
