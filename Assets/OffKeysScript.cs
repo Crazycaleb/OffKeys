@@ -15,6 +15,7 @@ public class OffKeysScript : MonoBehaviour
     public KMSelectable[] Buttonage;
     public Sprite[] Symbols;
     public SpriteRenderer[] SpriteSlots;
+    public KMSelectable[] ButtonageMach2;
 
 
 
@@ -24,11 +25,10 @@ public class OffKeysScript : MonoBehaviour
     private int[] KeyValueage = {0,0,0,0,0,1,1,1,1,2,2,2};
     private List<int> FaultyKeys = new List<int> {};
     private List<int> SymbolKeys = new List<int> {};
+    private int[] Offsets = new int[12];
+    private int[] Sym = new int[3];
     private string[] Piano = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     private string[] ExtendedPiano = {"C-", "C#-", "D-", "D#-", "E-", "F-", "F#-", "G-", "G#-", "A-", "A#-", "B-", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C+", "C#+", "D+", "D#+", "E+", "F+", "F#+", "G+", "G#+", "A+", "A#+", "B+", "C++"};
-    //Generate puzzle (choose 3 symbols with unique solution)
-    //while random=0, reroll
-    //if sound != same sound, find sound in extended piano, apply offset, play sound, big winner!!! bang bang bang
 
     int[][] RunesDiagram = new int[][]
     {
@@ -99,7 +99,13 @@ public class OffKeysScript : MonoBehaviour
         }
         Debug.Log("The Faulty Keys are " + FaultyKeys.Join(","));
         Debug.Log("The Symbol Keys are " + SymbolKeys.Join(","));
+
+        for (int i = 0; i < 4; i++)
+        {
+            Offsets[FaultyKeys[i]] = (Rnd.Range(0,2)==0) ? 1 : -1;
+        }
         //Debug.Log("Corresponding key for C#: " + CorKeys("C#").Join(","));
+
 
         List<int>[] CorKeys = Enumerable.Range(0, 4).Select(i => CalcKeys(FaultyKeys[i]).ToList()).ToArray();
         Debug.Log(CorKeys.Select(i => i.Join(",")).Join("\n"));
@@ -118,11 +124,11 @@ public class OffKeysScript : MonoBehaviour
 
         Debug.Log(KimWexler.Join(","));
         WompWomp:
-        var Symbols = Enumerable.Range(0, 37).Where(i => KimWexler[i] != 0).ToArray().Shuffle().Take(3).ToArray();
-        if (Symbols.Any(i => RunesDiagram[i].Contains(FaultyKeys[3])))
+        Sym = Enumerable.Range(0, 37).Where(i => KimWexler[i] != 0).ToArray().Shuffle().Take(3).ToArray();
+        if (Sym.Any(i => RunesDiagram[i].Contains(FaultyKeys[3])))
             goto WompWomp;
 
-        var Notes = Symbols.Select(i => RunesDiagram[i].Where(j => FaultyKeys.Contains(j)).OrderBy(x => x).ToArray()).ToArray();
+        var Notes = Sym.Select(i => RunesDiagram[i].Where(j => FaultyKeys.Contains(j)).OrderBy(x => x).ToArray()).ToArray();
         var oldNotes = Notes.ToArray();
 
         if (Notes[0].SequenceEqual(Notes[1]) || Notes[0].SequenceEqual(Notes[2]) || Notes[1].SequenceEqual(Notes[2]))
@@ -159,7 +165,7 @@ public class OffKeysScript : MonoBehaviour
             nextIter:;
         }
         Debug.Log("Faulty keys: " + FaultyKeys.Select(i => Piano[i]).Join(", "));
-        Debug.Log("Symbols: " + Symbols.Join(", "));
+        Debug.Log("Symbols: " + Sym.Join(", "));
         Debug.Log("Notes: " + oldNotes.Select(i => i.Select(j => Piano[j]).Join(" ")).Join(", "));
         Debug.Log("Assigned: " + notesToAssign.Select(i => Piano[i]).Join(", "));
     }
@@ -190,11 +196,17 @@ public class OffKeysScript : MonoBehaviour
         for (int i = 0; i < 12; i++)
         {
             if (Buttonage[i]==button)
+            {
+                StartCoroutine(KeyMove(button.transform));
+                Audio.PlaySoundAtTransform(ExtendedPiano[i + 12 + Offsets[i]],transform);
+
+                if (SymbolKeys.Contains(i))
                 {
-                    StartCoroutine(KeyMove(button.transform));
-                    Audio.PlaySoundAtTransform(Piano[i],transform);
+                    StartCoroutine(DisplaySymbols());
                 }
-        }    
+            }
+        }
+
     }
 
     private IEnumerator SolveAnimation()
@@ -208,6 +220,14 @@ public class OffKeysScript : MonoBehaviour
         SpriteSlots[2].sprite = Symbols[38];
         Module.HandlePass();
         _moduleSolved = true;
+    }
+
+    private IEnumerator DisplaySymbols()
+    {
+        yield return new WaitForSeconds(0.35f);
+        SpriteSlots[0].sprite = Symbols[Sym[0]];
+        SpriteSlots[1].sprite = Symbols[Sym[1]];
+        SpriteSlots[2].sprite = Symbols[Sym[2]];
     }
 
     IEnumerator KeyMove(Transform tf)
