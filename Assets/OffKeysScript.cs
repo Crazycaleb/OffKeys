@@ -24,7 +24,6 @@ public class OffKeysScript : MonoBehaviour
     private bool _moduleSolved;
     private int[] KeyValueage = {0,0,0,0,0,1,1,1,1,2,2,2};
     private List<int> FaultyKeys = new List<int> {};
-    private List<int> SymbolKeys = new List<int> {};
     private int[] Offsets = new int[12];
     private int[] Sym = new int[3];
     private string[] Piano = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
@@ -90,15 +89,12 @@ public class OffKeysScript : MonoBehaviour
 
         for (int i = 0; i < KeyValueage.Length; i++)
         {
-            switch(KeyValueage[i])
+            if(KeyValueage[i] == 1)
             {
-                case 1: FaultyKeys.Add(i); break;
-                case 2: SymbolKeys.Add(i); break;
-                default: break;
+                FaultyKeys.Add(i);
             }
         }
         Debug.Log("The Faulty Keys are " + FaultyKeys.Join(","));
-        Debug.Log("The Symbol Keys are " + SymbolKeys.Join(","));
 
         for (int i = 0; i < 4; i++)
         {
@@ -200,7 +196,7 @@ public class OffKeysScript : MonoBehaviour
                 StartCoroutine(KeyMove(button.transform));
                 Audio.PlaySoundAtTransform(ExtendedPiano[i + 12 + Offsets[i]],transform);
 
-                if (SymbolKeys.Contains(i))
+                if (!FaultyKeys.Contains(i))
                 {
                     StartCoroutine(DisplaySymbols());
                 }
@@ -226,7 +222,9 @@ public class OffKeysScript : MonoBehaviour
     {
         yield return new WaitForSeconds(0.35f);
         SpriteSlots[0].sprite = Symbols[Sym[0]];
+        yield return new WaitForSeconds(0.35f);
         SpriteSlots[1].sprite = Symbols[Sym[1]];
+        yield return new WaitForSeconds(0.35f);
         SpriteSlots[2].sprite = Symbols[Sym[2]];
     }
 
