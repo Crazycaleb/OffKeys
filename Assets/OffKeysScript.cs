@@ -17,16 +17,16 @@ public class OffKeysScript : MonoBehaviour
     public SpriteRenderer[] SpriteSlots;
     public KMSelectable[] ButtonageMach2;
 
-
-
     private int _moduleId;
     private static int _moduleIdCounter = 1;
     private bool _moduleSolved;
+
     private int[] KeyValueage = {0,0,0,0,0,1,1,1,1,2,2,2};
     private List<int> FaultyKeys = new List<int> {};
     private int[] Offsets = new int[12];
     private int[] Sym = new int[3];
     private int RuneSelected = -1;
+    private int[] NotesToAssign = new int [3];
     private int[] Assignments = new int [4];
     private string[] Piano = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     private string[] ExtendedPiano = {"C-", "C#-", "D-", "D#-", "E-", "F-", "F#-", "G-", "G#-", "A-", "A#-", "B-", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C+", "C#+", "D+", "D#+", "E+", "F+", "F#+", "G+", "G#+", "A+", "A#+", "B+", "C++"};
@@ -86,9 +86,7 @@ public class OffKeysScript : MonoBehaviour
             Rune.OnInteract += delegate () { RuneSelect(Rune); return false; };
         }
 
-
         GeneratePuzzle();
-
     }
 
     void GeneratePuzzle() 
@@ -97,11 +95,12 @@ public class OffKeysScript : MonoBehaviour
 
         for (int i = 0; i < KeyValueage.Length; i++)
         {
-            if(KeyValueage[i] == 1)
+            if (KeyValueage[i] == 1)
             {
                 FaultyKeys.Add(i);
             }
         }
+
         Debug.Log("The Faulty Keys are " + FaultyKeys.Join(","));
 
         for (int i = 0; i < 4; i++)
@@ -109,7 +108,6 @@ public class OffKeysScript : MonoBehaviour
             Offsets[FaultyKeys[i]] = (Rnd.Range(0,2)==0) ? 1 : -1;
         }
         //Debug.Log("Corresponding key for C#: " + CorKeys("C#").Join(","));
-
 
         List<int>[] CorKeys = Enumerable.Range(0, 4).Select(i => CalcKeys(FaultyKeys[i]).ToList()).ToArray();
         Debug.Log(CorKeys.Select(i => i.Join(",")).Join("\n"));
@@ -143,7 +141,7 @@ public class OffKeysScript : MonoBehaviour
         if (list.Distinct().Count() != 3)
             goto WompWomp;
 
-        var notesToAssign = new int[3] { 99, 99, 99 };
+        NotesToAssign = new int[3] { 99, 99, 99 };
 
         if (!Notes.Any(i => i.Length == 1))
             goto WompWomp;
@@ -152,7 +150,7 @@ public class OffKeysScript : MonoBehaviour
         {
             for (int i = 0; i < 3; i++)
             {
-                if (notesToAssign[i] != 99)
+                if (NotesToAssign[i] != 99)
                     continue;
                 if (Notes[i].Length == 0)
                     goto WompWomp;
@@ -160,9 +158,9 @@ public class OffKeysScript : MonoBehaviour
                     goto WompWomp;
                 if (Notes[i].Length == 1)
                 {
-                    notesToAssign[i] = Notes[i][0];
-                    Notes[(i + 1) % 3] = Notes[(i + 1) % 3].Where(j => j != notesToAssign[i]).ToArray();
-                    Notes[(i + 2) % 3] = Notes[(i + 2) % 3].Where(j => j != notesToAssign[i]).ToArray();
+                    NotesToAssign[i] = Notes[i][0];
+                    Notes[(i + 1) % 3] = Notes[(i + 1) % 3].Where(j => j != NotesToAssign[i]).ToArray();
+                    Notes[(i + 2) % 3] = Notes[(i + 2) % 3].Where(j => j != NotesToAssign[i]).ToArray();
                     goto nextIter;
                 }
             }
@@ -171,7 +169,8 @@ public class OffKeysScript : MonoBehaviour
         Debug.Log("Faulty keys: " + FaultyKeys.Select(i => Piano[i]).Join(", "));
         Debug.Log("Symbols: " + Sym.Join(", "));
         Debug.Log("Notes: " + oldNotes.Select(i => i.Select(j => Piano[j]).Join(" ")).Join(", "));
-        Debug.Log("Assigned: " + notesToAssign.Select(i => Piano[i]).Join(", "));
+        Debug.Log("Assigned: " + NotesToAssign.Select(i => Piano[i]).Join(", "));
+        Debug.Log("ZAMN");
     }
 
     private List<int> CalcKeys(int s)
@@ -215,8 +214,8 @@ public class OffKeysScript : MonoBehaviour
         {
             if (Buttonage[i]==button)
             {
-
-                if (RuneSelected == -1)
+                Debug.Log(IsThisTheSubmitButtonLol(i));
+                if (RuneSelected == -1 && !IsThisTheSubmitButtonLol(i))
                 {   
                     StartCoroutine(KeyMove(button.transform));
                     Audio.PlaySoundAtTransform(ExtendedPiano[i + 12 + Offsets[i]],transform);
@@ -225,10 +224,13 @@ public class OffKeysScript : MonoBehaviour
                     {
                         StartCoroutine(DisplaySymbols());
                     }
-                }
 
-                else 
-                {
+                } else  {
+                    if (IsThisTheSubmitButtonLol(i)) {
+                        CheckAns();
+                        return;
+                    }
+
                     if (!FaultyKeys.Contains(i))
                     {
                         return;
@@ -244,15 +246,15 @@ public class OffKeysScript : MonoBehaviour
                             } 
                             else if (Assignments[j] == 0)
                             {
+                                Assignments[FaultyKeys.IndexOf(i)] = RuneSelected;
+                                RuneSelected = -1;
+                                Debug.Log("Assignments: " + Assignments.Join(", "));
                                 return;
                             }
                         }
                         CheckAns();
                         return;
                     }
-                    Assignments[FaultyKeys.IndexOf(i)] = RuneSelected;
-                    RuneSelected = -1;
-                    Debug.Log("Assignments: " + Assignments.Join(", "));
                 }
 
             }
@@ -260,9 +262,35 @@ public class OffKeysScript : MonoBehaviour
 
     }
 
+    private bool IsThisTheSubmitButtonLol (int x) {
+        if (!FaultyKeys.Contains(x)) {
+            return false;
+        } else {
+            for (int s = 0; s < 4; s++) {
+                if (s == FaultyKeys.IndexOf(x)) {
+                    continue;
+                } else if (Assignments[s] == 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
     private void CheckAns()
     {
-        
+        for (int m = 0; m < 3; m++) {
+            if (NotesToAssign[m] != FaultyKeys[Array.IndexOf(Assignments, m+1)]) {
+                //strike
+                Module.HandleStrike();
+                for (int k = 0; k < 4; k++) {
+                    Assignments[k] = 0;
+                }
+                return;
+            }
+        }
+        //pass
+        StartCoroutine(SolveAnimation());
     }
 
     private IEnumerator SolveAnimation()
