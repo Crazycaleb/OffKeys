@@ -107,7 +107,6 @@ public class OffKeysScript : MonoBehaviour
         {
             Offsets[FaultyKeys[i]] = (Rnd.Range(0,2)==0) ? 1 : -1;
         }
-        //Debug.Log("Corresponding key for C#: " + CorKeys("C#").Join(","));
 
         List<int>[] CorKeys = Enumerable.Range(0, 4).Select(i => CalcKeys(FaultyKeys[i]).ToList()).ToArray();
         Debug.Log(CorKeys.Select(i => i.Join(",")).Join("\n"));
@@ -189,6 +188,7 @@ public class OffKeysScript : MonoBehaviour
 
     private void RuneSelect(KMSelectable Rune)
     {
+        if (_moduleSolved) { return; }
         Rune.AddInteractionPunch();
         for (int i = 0; i < 3; i++)
         {
@@ -209,6 +209,7 @@ public class OffKeysScript : MonoBehaviour
 
     void InputPress(KMSelectable button)
     {
+        if (_moduleSolved) { return; }
         button.AddInteractionPunch();
         for (int i = 0; i < 12; i++)
         {
