@@ -46,7 +46,7 @@ public class OffKeysScript : MonoBehaviour
         new int[] {6, 3, 8},
         new int[] {11, 0, 10},
         new int[] {3, 2, 9},
-        new int[] {3, 6, 8},
+        new int[] {3, 5, 8},
         new int[] {3, 0, 7},
         new int[] {10, 11, 3},
         new int[] {11, 9},
