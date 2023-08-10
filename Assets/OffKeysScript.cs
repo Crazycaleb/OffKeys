@@ -26,6 +26,8 @@ public class OffKeysScript : MonoBehaviour
     private List<int> FaultyKeys = new List<int> {};
     private int[] Offsets = new int[12];
     private int[] Sym = new int[3];
+    private int RuneSelected = -1;
+    private int[] Assignments = new int [4];
     private string[] Piano = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     private string[] ExtendedPiano = {"C-", "C#-", "D-", "D#-", "E-", "F-", "F#-", "G-", "G#-", "A-", "A#-", "B-", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C+", "C#+", "D+", "D#+", "E+", "F+", "F#+", "G+", "G#+", "A+", "A#+", "B+", "C++"};
 
@@ -37,14 +39,14 @@ public class OffKeysScript : MonoBehaviour
         new int[] {6, 4},
         new int[] {5, 9, 11},
         new int[] {8, 10, 2},
-        new int[] {6, 9},
+        new int[] {5, 6},
         new int[] {4, 11, 3},
         new int[] {10, 9, 2},
         new int[] {10, 9},
         new int[] {6, 3, 8},
         new int[] {11, 0, 10},
         new int[] {3, 2, 9},
-        new int[] {3, 9, 8},
+        new int[] {3, 6, 8},
         new int[] {3, 0, 7},
         new int[] {10, 11, 3},
         new int[] {11, 9},
@@ -56,14 +58,14 @@ public class OffKeysScript : MonoBehaviour
         new int[] {5, 11, 7},
         new int[] {1, 11},
         new int[] {1, 0, 10},
-        new int[] {5, 6, 10},
+        new int[] {2, 5, 6},
         new int[] {1, 10, 7},
         new int[] {0, 9},
-        new int[] {0, 4, 10},
+        new int[] {0, 2, 4},
         new int[] {5, 10, 1},
         new int[] {1, 2},
         new int[] {4, 9},
-        new int[] {10, 1, 7},
+        new int[] {2, 1, 7},
         new int[] {10, 2, 4},
         new int[] {4, 7},
         new int[] {1, 4, 8},
@@ -78,6 +80,12 @@ public class OffKeysScript : MonoBehaviour
         {
             button.OnInteract += delegate () { InputPress(button); return false; };
         }
+
+        foreach (KMSelectable Rune in ButtonageMach2)
+        {
+            Rune.OnInteract += delegate () { RuneSelect(Rune); return false; };
+        }
+
 
         GeneratePuzzle();
 
@@ -180,6 +188,20 @@ public class OffKeysScript : MonoBehaviour
 
     }
 
+    private void RuneSelect(KMSelectable Rune)
+    {
+        Rune.AddInteractionPunch();
+        for (int i = 0; i < 3; i++)
+        {
+            if (ButtonageMach2[i] == Rune)
+            {
+                RuneSelected = i + 1;         
+                Debug.Log("Rune select: " + i);
+            }
+        }
+
+    }
+
     private void Solve()
     {        
         StartCoroutine(SolveAnimation());
@@ -193,16 +215,54 @@ public class OffKeysScript : MonoBehaviour
         {
             if (Buttonage[i]==button)
             {
-                StartCoroutine(KeyMove(button.transform));
-                Audio.PlaySoundAtTransform(ExtendedPiano[i + 12 + Offsets[i]],transform);
 
-                if (!FaultyKeys.Contains(i))
-                {
-                    StartCoroutine(DisplaySymbols());
+                if (RuneSelected == -1)
+                {   
+                    StartCoroutine(KeyMove(button.transform));
+                    Audio.PlaySoundAtTransform(ExtendedPiano[i + 12 + Offsets[i]],transform);
+
+                    if (!FaultyKeys.Contains(i))
+                    {
+                        StartCoroutine(DisplaySymbols());
+                    }
                 }
+
+                else 
+                {
+                    if (!FaultyKeys.Contains(i))
+                    {
+                        return;
+                    }
+
+                    if (Assignments[FaultyKeys.IndexOf(i)] == 0)
+                    {   
+                        for (int j = 0; j < 4; j++)
+                        {
+                            if (j == FaultyKeys.IndexOf(i))
+                            {
+                                continue;
+                            } 
+                            else if (Assignments[j] == 0)
+                            {
+                                return;
+                            }
+                        }
+                        CheckAns();
+                        return;
+                    }
+                    Assignments[FaultyKeys.IndexOf(i)] = RuneSelected;
+                    RuneSelected = -1;
+                    Debug.Log("Assignments: " + Assignments.Join(", "));
+                }
+
             }
         }
 
+    }
+
+    private void CheckAns()
+    {
+        
     }
 
     private IEnumerator SolveAnimation()
@@ -226,6 +286,12 @@ public class OffKeysScript : MonoBehaviour
         SpriteSlots[1].sprite = Symbols[Sym[1]];
         yield return new WaitForSeconds(0.35f);
         SpriteSlots[2].sprite = Symbols[Sym[2]];
+        yield return new WaitForSeconds(0.35f);
+        SpriteSlots[0].sprite = Symbols[37];
+        yield return new WaitForSeconds(0.35f);
+        SpriteSlots[1].sprite = Symbols[37];
+        yield return new WaitForSeconds(0.35f);
+        SpriteSlots[2].sprite = Symbols[37];
     }
 
     IEnumerator KeyMove(Transform tf)
