@@ -220,12 +220,8 @@ public class OffKeysScript : MonoBehaviour
                 {   
                     StartCoroutine(KeyMove(button.transform));
                     Audio.PlaySoundAtTransform(ExtendedPiano[i + 12 + Offsets[i]],transform);
-
-                    if (!FaultyKeys.Contains(i))
-                    {
-                        StartCoroutine(DisplaySymbols());
-                    }
-
+                    StartCoroutine(DisplaySymbols());
+                    
                 } else  {
                     if (IsThisTheSubmitButtonLol(i)) {
                         CheckAns();
@@ -248,6 +244,7 @@ public class OffKeysScript : MonoBehaviour
                             else if (Assignments[j] == 0)
                             {
                                 Assignments[FaultyKeys.IndexOf(i)] = RuneSelected;
+                                StartCoroutine(YouAreDumbSymbols(RuneSelected - 1));
                                 RuneSelected = -1;
                                 Debug.Log("Assignments: " + Assignments.Join(", "));
                                 return;
@@ -287,8 +284,12 @@ public class OffKeysScript : MonoBehaviour
                 for (int k = 0; k < 4; k++) {
                     Assignments[k] = 0;
                 }
+                for (int n = 0; n < 3; n++){
+                    SpriteSlots[n].color = new Color(SpriteSlots[n].color.r, SpriteSlots[n].color.g, SpriteSlots[n].color.b, 1);
+                }
                 return;
             }
+            
         }
         //pass
         StartCoroutine(SolveAnimation());
@@ -298,10 +299,13 @@ public class OffKeysScript : MonoBehaviour
     {
         Audio.PlaySoundAtTransform("offsolveSound", transform);
         yield return new WaitForSeconds(0.35f);
+        SpriteSlots[0].color = new Color(SpriteSlots[0].color.r, SpriteSlots[0].color.g, SpriteSlots[0].color.b, 1);
         SpriteSlots[0].sprite = Symbols[39];
         yield return new WaitForSeconds(0.35f);
+        SpriteSlots[1].color = new Color(SpriteSlots[1].color.r, SpriteSlots[1].color.g, SpriteSlots[1].color.b, 1);
         SpriteSlots[1].sprite = Symbols[39];
         yield return new WaitForSeconds(0.35f);
+        SpriteSlots[2].color = new Color(SpriteSlots[2].color.r, SpriteSlots[2].color.g, SpriteSlots[2].color.b, 1);
         SpriteSlots[2].sprite = Symbols[38];
         Module.HandlePass();
         _moduleSolved = true;
@@ -321,6 +325,17 @@ public class OffKeysScript : MonoBehaviour
         SpriteSlots[1].sprite = Symbols[37];
         yield return new WaitForSeconds(0.35f);
         SpriteSlots[2].sprite = Symbols[37];
+    }
+
+    private IEnumerator YouAreDumbSymbols(int pos)
+    {
+        float lol = 1f;
+        while (lol > 0f)
+        {
+            lol -= .02f;
+            SpriteSlots[pos].color = new Color(SpriteSlots[pos].color.r, SpriteSlots[pos].color.g, SpriteSlots[pos].color.b, lol);
+            yield return new WaitForSeconds(0.01f);
+        }
     }
 
     IEnumerator KeyMove(Transform tf)
