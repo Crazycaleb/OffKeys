@@ -378,6 +378,12 @@ public class OffKeysScript : MonoBehaviour
                 yield break;
             }
 
+            if (Assignments.Any(x => x == int.Parse(split[1])))
+            {
+                yield return "sendtochaterror You have already assigned a rune to a key!";
+                yield break;
+            }
+
             if (split.Length == 2)
             {
                 yield return "sendtochaterror Please specify what key to map your rune to!";
