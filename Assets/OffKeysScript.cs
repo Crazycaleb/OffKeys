@@ -165,11 +165,10 @@ public class OffKeysScript : MonoBehaviour
             }
             nextIter:;
         }
-        Debug.Log("Faulty keys: " + FaultyKeys.Select(i => Piano[i]).Join(", "));
-        Debug.Log("Symbols: " + Sym.Join(", "));
+        Debug.LogFormat("The Faulty keys are: " + FaultyKeys.Select(i => Piano[i]).Join(", "));
+        Debug.LogFormat("The Runes are: " + Sym.Join(", "));
         Debug.Log("Notes: " + oldNotes.Select(i => i.Select(j => Piano[j]).Join(" ")).Join(", "));
-        Debug.Log("Assigned: " + NotesToAssign.Select(i => Piano[i]).Join(", "));
-        Debug.Log("ZAMN");
+        Debug.LogFormat("The note for each rune should be: " + NotesToAssign.Select(i => Piano[i]).Join(", "));
     }
 
     private List<int> CalcKeys(int s)
