@@ -342,7 +342,7 @@ public class OffKeysScript : MonoBehaviour
     // Twitch Plays support by Kilo Bites
 
 #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"!{0}";
+    private readonly string TwitchHelpMessage = @"!{0} cycle to cycle all the keys || !{0} map 123 cdefgaa#b to map a rune in that position to a specific key. || !{0} C D# G F to press a key.";
 #pragma warning restore 414
 
     IEnumerator ProcessTwitchCommand (string command)
@@ -399,6 +399,9 @@ public class OffKeysScript : MonoBehaviour
 
         if (Piano.Contains(split[0]))
         {
+            if (split[0].Length > 2)
+                yield break;
+
             Buttonage[Array.IndexOf(Piano, split[0])].OnInteract();
             yield return new WaitForSeconds(0.1f);
         }
