@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Networking;
 using Rnd = UnityEngine.Random;
 
 public class OffKeysScript : MonoBehaviour
@@ -19,17 +20,20 @@ public class OffKeysScript : MonoBehaviour
     private static int _moduleIdCounter = 1;
     private bool _moduleSolved;
 
-    private int[] KeyShuffle = {0,0,0,0,0,0,0,0,1,1,1,1};
-    private List<int> FaultyKeys = new List<int> {};
+    private int[] KeyShuffle = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
+    private List<int> FaultyKeys = new List<int> { };
     private int[] Offsets = new int[12];
     private int[] PickedSymbols = new int[3];
     private int RuneSelected = -1;
-    private int[] NotesToAssign = new int [3];
-    private int[] Assignments = new int [4];
-    private string[] Piano = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-    private string[] ExtendedPiano = {"C-", "C#-", "D-", "D#-", "E-", "F-", "F#-", "G-", "G#-", "A-", "A#-", "B-", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C+", "C#+", "D+", "D#+", "E+", "F+", "F#+", "G+", "G#+", "A+", "A#+", "B+", "C++"};
+    private int[] NotesToAssign = new int[3];
+    private int[] Assignments = new int[4];
+    private string[] Piano = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+    private string[] ExtendedPiano = { "C-", "C#-", "D-", "D#-", "E-", "F-", "F#-", "G-", "G#-", "A-", "A#-", "B-", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C+", "C#+", "D+", "D#+", "E+", "F+", "F#+", "G+", "G#+", "A+", "A#+", "B+", "C++" };
 
     private Coroutine solvePlaying;
+
+    private Coroutine[] _pressAnims = new Coroutine[12];
+    private Coroutine _fadeAnim;
 
     int[][] RunesDiagram = new int[][]
     {
@@ -76,20 +80,25 @@ public class OffKeysScript : MonoBehaviour
     {
         _moduleId = _moduleIdCounter++;
 
-        foreach (KMSelectable button in PianoKeySels)
+        for (int i = 0; i < PianoKeySels.Length; i++)
         {
-            button.OnInteract += delegate () { InputPress(button); return false; };
+            PianoKeySels[i].OnInteract += PianoKeyPress(i);
+            PianoKeySels[i].OnInteractEnded += PianoKeyRelease(i);
         }
 
         foreach (KMSelectable Rune in RuneSels)
         {
-            Rune.OnInteract += delegate () { RuneSelect(Rune); return false; };
+            Rune.OnInteract += delegate ()
+            {
+                RuneSelect(Rune);
+                return false;
+            };
         }
 
         GeneratePuzzle();
     }
 
-    void GeneratePuzzle() 
+    void GeneratePuzzle()
     {
         KeyShuffle.Shuffle(); // this has exactly 4 1s
 
@@ -105,7 +114,7 @@ public class OffKeysScript : MonoBehaviour
 
         for (int i = 0; i < 4; i++)
         {
-            Offsets[FaultyKeys[i]] = (Rnd.Range(0,2)==0) ? 1 : -1; //these faulty keys play a note off by ±1 semitone at random
+            Offsets[FaultyKeys[i]] = (Rnd.Range(0, 2) == 0) ? 1 : -1; //these faulty keys play a note off by ±1 semitone at random
         }
 
         List<int>[] SymbolFinder = Enumerable.Range(0, 4).Select(i => CalcKeys(FaultyKeys[i]).ToList()).ToArray(); //this turns the faulty keys to every possible symbol with that note as a corner using CalcKeys()
@@ -176,7 +185,7 @@ public class OffKeysScript : MonoBehaviour
 
     private List<int> CalcKeys(int s)
     {
-        List<int> FoundSymbols = new List<int> {};
+        List<int> FoundSymbols = new List<int> { };
         for (int i = 0; i < 37; i++)
         {
             if (RunesDiagram[i].Contains(s))
@@ -194,72 +203,99 @@ public class OffKeysScript : MonoBehaviour
         Rune.AddInteractionPunch();
         for (int i = 0; i < 3; i++)
         {
-            if (RuneSels[i] == Rune) {
+            if (RuneSels[i] == Rune)
+            {
                 RuneSelected = i + 1;
             }
         }
     }
 
-
-    void InputPress(KMSelectable button) //WHEN WE PRESS A KEY THIS IS BADLY NAMED hdsajjdakjfdkl;
+    private KMSelectable.OnInteractHandler PianoKeyPress(int i) //WHEN WE PRESS A KEY THIS IS BADLY NAMED hdsajjdakjfdkl;
     {
-        if (_moduleSolved || solvePlaying != null) { return; }
-        button.AddInteractionPunch();
-        for (int i = 0; i < 12; i++)
+        return delegate ()
         {
-            if (PianoKeySels[i]==button)
+            PianoKeySels[i].AddInteractionPunch();
+            if (_moduleSolved || solvePlaying != null)
+                return false;
+            if (_pressAnims[i] != null)
+                StopCoroutine(_pressAnims[i]);
+            _pressAnims[i] = StartCoroutine(KeyMove(i, true));
+            if (RuneSelected == -1 && !IsThisTheSubmitButtonLol(i))
             {
-                if (RuneSelected == -1 && !IsThisTheSubmitButtonLol(i))
-                {   
-                    StartCoroutine(KeyMove(button.transform));
-                    Audio.PlaySoundAtTransform(ExtendedPiano[i + 12 + Offsets[i]],transform);
-                    StartCoroutine(DisplaySymbols());
-                    
-                } else  {
-                    if (IsThisTheSubmitButtonLol(i)) {
-                        CheckAns();
-                        return;
-                    }
-
-                    if (!FaultyKeys.Contains(i))
-                    {
-                        return;
-                    }
-
-                    if (Assignments[FaultyKeys.IndexOf(i)] == 0)
-                    {   
-                        for (int j = 0; j < 4; j++)
-                        {
-                            if (j == FaultyKeys.IndexOf(i))
-                            {
-                                continue;
-                            } 
-                            else if (Assignments[j] == 0)
-                            {
-                                Assignments[FaultyKeys.IndexOf(i)] = RuneSelected;
-                                StartCoroutine(YouAreDumbSymbols(RuneSelected - 1));
-                                RuneSelected = -1;
-                                return;
-                            }
-                        }
-                        CheckAns();
-                        return;
-                    }
+                Audio.PlaySoundAtTransform(ExtendedPiano[i + 12 + Offsets[i]], transform);
+                if (_fadeAnim != null)
+                    StopCoroutine(_fadeAnim);
+                _fadeAnim = StartCoroutine(DisplaySymbols(true));
+            }
+            else
+            {
+                if (IsThisTheSubmitButtonLol(i))
+                {
+                    CheckAns();
+                    return false;
                 }
 
-            }
-        }
+                if (!FaultyKeys.Contains(i))
+                {
+                    return false;
+                }
 
+                if (Assignments[FaultyKeys.IndexOf(i)] == 0)
+                {
+                    for (int j = 0; j < 4; j++)
+                    {
+                        if (j == FaultyKeys.IndexOf(i))
+                        {
+                            continue;
+                        }
+                        else if (Assignments[j] == 0)
+                        {
+                            Assignments[FaultyKeys.IndexOf(i)] = RuneSelected;
+                            StartCoroutine(YouAreDumbSymbols(RuneSelected - 1));
+                            RuneSelected = -1;
+                            return false;
+                        }
+                    }
+                    CheckAns();
+                    return false;
+                }
+            }
+            return false;
+        };
     }
 
-    private bool IsThisTheSubmitButtonLol (int x) {
-        if (!FaultyKeys.Contains(x)) {
+    private Action PianoKeyRelease(int i)
+    {
+        return delegate ()
+        {
+            if (_pressAnims[i] != null)
+                StopCoroutine(_pressAnims[i]);
+            _pressAnims[i] = StartCoroutine(KeyMove(i, false));
+            if (_moduleSolved)
+                return;
+            if (_fadeAnim != null)
+                StopCoroutine(_fadeAnim);
+            _fadeAnim = StartCoroutine(DisplaySymbols(false));
+            return;
+        };
+    }
+
+    private bool IsThisTheSubmitButtonLol(int x)
+    {
+        if (!FaultyKeys.Contains(x))
+        {
             return false;
-        } else {
-            for (int s = 0; s < 4; s++) {
-                if (s == FaultyKeys.IndexOf(x)) {
+        }
+        else
+        {
+            for (int s = 0; s < 4; s++)
+            {
+                if (s == FaultyKeys.IndexOf(x))
+                {
                     continue;
-                } else if (Assignments[s] == 0) {
+                }
+                else if (Assignments[s] == 0)
+                {
                     return false;
                 }
             }
@@ -269,19 +305,23 @@ public class OffKeysScript : MonoBehaviour
 
     private void CheckAns()
     {
-        for (int m = 0; m < 3; m++) {
-            if (NotesToAssign[m] != FaultyKeys[Array.IndexOf(Assignments, m+1)]) {
+        for (int m = 0; m < 3; m++)
+        {
+            if (NotesToAssign[m] != FaultyKeys[Array.IndexOf(Assignments, m + 1)])
+            {
                 //strike
                 Module.HandleStrike();
-                for (int k = 0; k < 4; k++) {
+                for (int k = 0; k < 4; k++)
+                {
                     Assignments[k] = 0;
                 }
-                for (int n = 0; n < 3; n++){
+                for (int n = 0; n < 3; n++)
+                {
                     SpriteSlots[n].color = new Color(SpriteSlots[n].color.r, SpriteSlots[n].color.g, SpriteSlots[n].color.b, 1);
                 }
                 return;
             }
-            
+
         }
         //pass
         solvePlaying = StartCoroutine(SolveAnimation());
@@ -303,21 +343,44 @@ public class OffKeysScript : MonoBehaviour
         _moduleSolved = true;
     }
 
-    private IEnumerator DisplaySymbols()
+    private IEnumerator DisplaySymbols(bool doDisplay)
     {
-        yield return new WaitForSeconds(0.35f);
-        SpriteSlots[0].sprite = Symbols[PickedSymbols[0]];
-        yield return new WaitForSeconds(0.35f);
-        SpriteSlots[1].sprite = Symbols[PickedSymbols[1]];
-        yield return new WaitForSeconds(0.35f);
-        SpriteSlots[2].sprite = Symbols[PickedSymbols[2]];
-        yield return new WaitForSeconds(0.35f);
-        SpriteSlots[0].sprite = Symbols[37];
-        yield return new WaitForSeconds(0.35f);
-        SpriteSlots[1].sprite = Symbols[37];
-        yield return new WaitForSeconds(0.35f);
-        SpriteSlots[2].sprite = Symbols[37];
+        if (doDisplay)
+        {
+            var duration = 0.3f;
+            var elapsed = 0f;
+            while (elapsed < duration)
+            {
+                for (int i = 0; i < 3; i++)
+                    SpriteSlots[i].color = new Color(1, 1, 1, Mathf.Lerp(1, 0, elapsed / duration));
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+            elapsed = 0f;
+            for (int i = 0; i < 3; i++)
+                SpriteSlots[i].sprite = Symbols[PickedSymbols[i]];
+            while (elapsed < duration)
+            {
+                for (int i = 0; i < 3; i++)
+                    SpriteSlots[i].color = new Color(1, 1, 1, Mathf.Lerp(0, 1, elapsed / duration));
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+            for (int i = 0; i < 3; i++)
+                SpriteSlots[i].color = new Color(1, 1, 1, 1);
+        }
+        else
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                SpriteSlots[i].sprite = Symbols[37];
+                SpriteSlots[i].color = new Color(1, 1, 1, 1);
+            }
+        }
+
+        yield break;
     }
+
 
     private IEnumerator YouAreDumbSymbols(int pos)
     {
@@ -330,16 +393,19 @@ public class OffKeysScript : MonoBehaviour
         }
     }
 
-    IEnumerator KeyMove(Transform tf)
+    private IEnumerator KeyMove(int ix, bool isPress)
     {
-        float delta = 0;
-        while (delta < 1)
+        var obj = PianoKeySels[ix].gameObject;
+        var pos = obj.transform.localEulerAngles;
+        var duration = 0.05f;
+        var elapsed = 0f;
+        while (elapsed < duration)
         {
-            delta += 6 * Time.deltaTime;
-            tf.localEulerAngles = new Vector3(Mathf.Lerp(0, 5, delta), 0, 0);
+            obj.transform.localEulerAngles = new Vector3(Mathf.Lerp(pos.x, isPress ? 5f : 0, elapsed / duration), 0, 0);
             yield return null;
+            elapsed += Time.deltaTime;
         }
-        tf.localEulerAngles = new Vector3(0, 0, 0);
+        obj.transform.localEulerAngles = new Vector3(isPress ? 5f : 0, 0, 0);
     }
 
 
@@ -349,7 +415,7 @@ public class OffKeysScript : MonoBehaviour
     private readonly string TwitchHelpMessage = @"!{0} cycle to cycle all the keys || !{0} map 123 cdefgaa#b to map a rune in that position to a specific key. || !{0} C D# G F to press a key.";
 #pragma warning restore 414
 
-    IEnumerator ProcessTwitchCommand (string command)
+    IEnumerator ProcessTwitchCommand(string command)
     {
         string[] split = command.ToUpperInvariant().Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -359,8 +425,8 @@ public class OffKeysScript : MonoBehaviour
         {
             for (int i = 0; i < PianoKeySels.Length; i++)
             {
-                PianoKeySels[i].OnInteract();
-                yield return new WaitForSeconds(2);
+                yield return new[] { PianoKeySels[i] };
+                yield return new WaitForSeconds(2f);
             }
             yield break;
         }
@@ -402,8 +468,8 @@ public class OffKeysScript : MonoBehaviour
 
             RuneSels[int.Parse(split[1]) - 1].OnInteract();
             yield return new WaitForSeconds(0.1f);
-            PianoKeySels[Array.IndexOf(Piano, split[2])].OnInteract();
-            yield return new WaitForSeconds(0.1f);
+            yield return new[] { PianoKeySels[Array.IndexOf(Piano, split[2])] };
+
             yield break;
         }
 
@@ -412,8 +478,7 @@ public class OffKeysScript : MonoBehaviour
             if (split[0].Length > 2)
                 yield break;
 
-            PianoKeySels[Array.IndexOf(Piano, split[0])].OnInteract();
-            yield return new WaitForSeconds(0.1f);
+            yield return new[] { PianoKeySels[Array.IndexOf(Piano, split[0])] };
         }
     }
 
@@ -441,10 +506,15 @@ public class OffKeysScript : MonoBehaviour
             RuneSels[i].OnInteract();
             yield return new WaitForSeconds(0.1f);
             PianoKeySels[NotesToAssign[i]].OnInteract();
+            Debug.Log(PianoKeySels[i].name);
+            yield return new WaitForSeconds(0.1f);
+            PianoKeySels[NotesToAssign[i]].OnInteractEnded();
             yield return new WaitForSeconds(0.1f);
         }
 
         PianoKeySels[FaultyKeys.Where(x => !NotesToAssign.Contains(x)).Single()].OnInteract();
+        yield return new WaitForSeconds(0.1f);
+        PianoKeySels[FaultyKeys.Where(x => !NotesToAssign.Contains(x)).Single()].OnInteractEnded();
         yield return new WaitForSeconds(0.1f);
 
         while (!_moduleSolved)
