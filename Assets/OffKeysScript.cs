@@ -16,6 +16,7 @@ public class OffKeysScript : MonoBehaviour
     public Sprite[] Symbols;
     public SpriteRenderer[] SpriteSlots;
     public KMSelectable[] RuneSels;
+    public GameObject[] IndicatorObjs;
 
     private int _moduleId;
     private static int _moduleIdCounter = 1;
@@ -263,15 +264,29 @@ public class OffKeysScript : MonoBehaviour
     private IEnumerator SolveAnimation()
     {
         Audio.PlaySoundAtTransform("offsolveSound", transform);
-        yield return new WaitForSeconds(0.35f);
-        SpriteSlots[0].color = new Color(SpriteSlots[0].color.r, SpriteSlots[0].color.g, SpriteSlots[0].color.b, 1);
-        SpriteSlots[0].sprite = Symbols[39];
-        yield return new WaitForSeconds(0.35f);
-        SpriteSlots[1].color = new Color(SpriteSlots[1].color.r, SpriteSlots[1].color.g, SpriteSlots[1].color.b, 1);
-        SpriteSlots[1].sprite = Symbols[39];
-        yield return new WaitForSeconds(0.35f);
-        SpriteSlots[2].color = new Color(SpriteSlots[2].color.r, SpriteSlots[2].color.g, SpriteSlots[2].color.b, 1);
-        SpriteSlots[2].sprite = Symbols[38];
+        for (int i = 0; i < 3; i++)
+        {
+            yield return new WaitForSeconds(0.2f);
+            SpriteSlots[i].sprite = Symbols[i == 2 ? 38 : 39];
+            SpriteSlots[i].color = new Color(1, 1, 1, 1);
+            var duration = 0.1f;
+            var elapsed = 0f;
+            while (elapsed < duration)
+            {
+                IndicatorObjs[i].transform.localScale = new Vector3(Mathf.Lerp(0f, 1.25f, elapsed / duration), Mathf.Lerp(0f, 1.25f, elapsed / duration), 1f);
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+            elapsed = 0f;
+            duration = 0.05f;
+            while (elapsed < duration)
+            {
+                IndicatorObjs[i].transform.localScale = new Vector3(Mathf.Lerp(1.25f, 1f, elapsed / duration), Mathf.Lerp(1.25f, 1f, elapsed / duration), 1f);
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+            IndicatorObjs[i].transform.localScale = new Vector3(1f, 1f, 1f);
+        }
         Module.HandlePass();
         _moduleSolved = true;
     }
