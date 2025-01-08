@@ -327,7 +327,7 @@ public class OffKeysScript : MonoBehaviour
     }
 
 #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"!{0} press C D# F G A# [Press these keys.} | !{0} map 1 c# [Map Rune #1 to the C# key.]";
+    private readonly string TwitchHelpMessage = @"!{0} press C D# F G A# [Press these keys.] | !{0} map 1 c# [Map Rune #1 to the C# key.]";
 #pragma warning restore 414
 
     IEnumerator ProcessTwitchCommand(string command)
