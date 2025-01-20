@@ -201,8 +201,8 @@ public class OffKeysScript : MonoBehaviour
 
             if (_runeSelected == null)
             {
-                if (_mappedKeys.All(x => x != null) && i == _submitKey)
-                    CheckAns();
+                if (_mappedKeys.All(x => x != null) && FaultyKeys.Contains(i))
+                    CheckAns(i);
                 else
                 {
                     Audio.PlaySoundAtTransform(ExtendedPiano[i + 12 + Offsets[i]], transform);
@@ -213,14 +213,6 @@ public class OffKeysScript : MonoBehaviour
 
             if (!FaultyKeys.Contains(i))
                 return false;
-
-            if (i == _submitKey)
-            {
-                Debug.LogFormat("[Off Keys #{0}] Attempted to map a rune to the submitting key. Strike.", _moduleId);
-                _runeSelected = null;
-                Module.HandleStrike();
-                return false;
-            }
 
             _mappedKeys[_runeSelected.Value] = i;
             StartCoroutine(FadeRune(_runeSelected.Value));
@@ -244,20 +236,27 @@ public class OffKeysScript : MonoBehaviour
         };
     }
 
-    private void CheckAns()
+    private void CheckAns(int submissionkey)
     {
         var tempArr = new int[3];
         for (int i = 0; i < 3; i++)
+        {
             tempArr[i] = _mappedKeys[i].Value;
+            Debug.LogFormat("[Off Keys #{0}] Mapped rune #{1} to {2}.", _moduleId, i + 1, Piano[_mappedKeys[i].Value]);
+        }
+
+        Debug.LogFormat("[Off Keys #{0}] Used {1} to submit.", _moduleId, Piano[submissionkey]);
 
         if (!tempArr.SequenceEqual(NotesToAssign))
         {
             _mappedKeys = new int?[3];
             for (int i = 0; i < 3; i++)
                 SpriteSlots[i].color = new Color(1, 1, 1, 1);
+            Debug.LogFormat("[Off Keys #{0}] Incorrect submission. Strike.", _moduleId);
             Module.HandleStrike();
             return;
         }
+        Debug.LogFormat("[Off Keys #{0}] Correct submission. Module solved.", _moduleId);
         solvePlaying = StartCoroutine(SolveAnimation());
     }
 
